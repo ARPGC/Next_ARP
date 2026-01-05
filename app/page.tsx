@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import DashboardWidgets from "@/components/DashboardWidgets";
 import { Recycle, CalendarCheck, Lightbulb, ArrowRight, Calendar } from "lucide-react";
 import Link from "next/link";
-import { formatDate } from "@/lib/utils";
 
 export default async function Dashboard() {
   const supabase = createClient();
@@ -14,7 +13,7 @@ export default async function Dashboard() {
 
   const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
-  // 2. Fetch All Data in Parallel (Fastest method)
+  // 2. Fetch All Data in Parallel
   const [userRes, impactRes, streakRes, checkinRes, eventsRes] = await Promise.all([
     supabase.from("users").select("*").eq("auth_user_id", session.user.id).single(),
     supabase.from("user_impact").select("*").eq("user_id", session.user.id).single(),
@@ -26,7 +25,10 @@ export default async function Dashboard() {
   const user = userRes.data;
   const impact = impactRes.data || { total_plastic_kg: 0, events_attended: 0 };
   const streak = streakRes.data?.current_streak || 0;
-  const isCheckedIn = (checkinRes.data && checkinRes.data.length > 0);
+  
+  // --- FIX IS HERE: Force boolean conversion ---
+  const isCheckedIn = !!(checkinRes.data && checkinRes.data.length > 0);
+  
   const nextEvent = eventsRes.data?.[0];
 
   return (
